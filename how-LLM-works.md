@@ -2,7 +2,12 @@
 
 Personal notes from Abhilash’s walkthrough (GPT-2-small–shaped numbers as examples). Pre-training taught the weights via next-token prediction; at inference those weights stay fixed.
 
-## Final reference — nested steps
+## Steps for Pre-training
+
+- **768 dimensions** = length of each vector (a design size). The *values* inside are learned in pre-training; there is no separate training step before pre-training.
+- Pre-training **is** next-token prediction. Post-training (instruction tuning, RLHF, etc.) comes after and refines behavior.
+
+## Steps for Inference
 
 1. **Tokenize** — Split the prompt into tokens and map each to a vocabulary ID.
 
@@ -29,9 +34,5 @@ Personal notes from Abhilash’s walkthrough (GPT-2-small–shaped numbers as ex
 
 8. **Autoregressive loop** — Append the chosen token and repeat until EOS or max length.
 
-## Quick clarifications
-
-- **768 dimensions** = length of each vector (a design size). The *values* inside are learned in pre-training; there is no separate training step before pre-training.
-- Pre-training **is** next-token prediction. Post-training (instruction tuning, RLHF, etc.) comes after and refines behavior.
 - Only the **last** position is scored for the next token (1×768 → V logits), not every word in the sequence against the full vocab for this step.
 - Softmax is not a step *after* “getting probabilities”; it is how logits become probabilities.
