@@ -9,13 +9,12 @@ Personal notes from Abhilash’s walkthrough (GPT-2-small–shaped numbers as ex
 
 ## Steps for Post-training
 
-Post-training starts from the base model (pre-training only) and usually goes like this.
+Post-training starts from the base model (pre-training only).
 
-1. **Instruction tuning (supervised fine-tuning).** Train on a user message plus one good assistant reply, including tool-call examples. This is what makes it act as an assistant.
-2. **Preference tuning.**
-   - Train a reward model on human comparisons of two replies.
-   - Run reinforcement learning: the assistant writes, the reward model scores, and the algorithm nudges the assistant toward higher scores. Stop on a step budget or when held-out reward or win rate flattens.
-3. **Optional extras.** Safety and more tool use are extra post-training passes, not part of pre-training.
+1. **Instruction tuning (supervised fine-tuning). For thinking and non-thinking models.** Train on a user message plus one good reply, including tool-call examples.
+2. **Preference tuning (RLHF). For thinking and non-thinking models.** For answers you cannot automatically check: people rank two replies, a reward model learns that ranking, and reinforcement learning nudges the assistant toward higher scores. This step stays shorter because the model can game the reward. Non-thinking models often stop here.
+3. **Reinforcement learning on checkable answers. For thinking models.** Generate many attempts, keep the ones that match a correct answer (math, code), and train on those. This produces longer step-by-step reasoning. Skip it for non-thinking models.
+4. **Optional extras.** Safety and more tool use are extra post-training passes, not part of pre-training.
 
 After that, weights are frozen and inference is just using them.
 
