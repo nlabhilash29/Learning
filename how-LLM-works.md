@@ -4,8 +4,32 @@ Personal notes from Abhilash’s walkthrough (GPT-2-small–shaped numbers as ex
 
 ## Steps for Pre-training
 
-- **768 dimensions** = length of each vector (a design size). The *values* inside are learned in pre-training; there is no separate training step before pre-training.
-- Pre-training **is** next-token prediction. Post-training (instruction tuning, RLHF, etc.) comes after and refines behavior.
+Self-supervised: labels come from the text itself (the actual next token). Weights are updated. No greedy / top-k / top-p picking.
+
+1. **Take a text chunk** — e.g. `I love pizza` (the text is the label source).
+
+2. **Tokenize** — Map the whole chunk to vocabulary IDs.
+
+3. **Build input embeddings**
+   - **Token embeddings** — Look up each ID → fixed-length vector (e.g. 768). The 768 is the length of each vector (a design size). The values inside are learned in pre-training; there is no separate training step before pre-training.
+   - **Positional embeddings** — Add position vectors, then sum with token vectors.
+
+4. **Transformer stack (one forward pass, causal mask)** — Feed the full sequence; each position only sees the past. In each layer:
+   - **Attention** — Mix context from allowed past tokens.
+   - **Feed-forward** — Transform that position’s vector with current weights.
+   - Residuals / norms between.
+
+5. **Vocab / LM head** — At every position, map hidden state → logits over the full vocabulary (guess for “token after me”).
+
+6. **Softmax → probabilities** — Full distribution per position (usually temperature T = 1). Softmax *is* \(p_i = e^{z_i}/\sum_j e^{z_j}\).
+
+7. **Loss vs true next token** — For each position, look at the model’s probability on the **actual** next token from the text (target = 1 on that ID, 0 elsewhere). Average cross-entropy. Do **not** greedy-pick first then compare.
+
+8. **Backprop + optimizer** — Update embedding tables, transformer weights, and vocab head.
+
+9. **Repeat / stop** — Next batch until stop rules (token or money budget, schedule done, held-out loss flattened; save checkpoints and roll back if held-out worsens).
+
+**Note:** Feed-forward is a sublayer inside the stack, not the next-token trainer. Next-token prediction is the training objective (loss on step 7). Post-training comes after and refines behavior.
 
 ## Steps for Post-training
 
