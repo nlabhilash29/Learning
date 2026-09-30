@@ -7,6 +7,18 @@ Personal notes from Abhilash’s walkthrough (GPT-2-small–shaped numbers as ex
 - **768 dimensions** = length of each vector (a design size). The *values* inside are learned in pre-training; there is no separate training step before pre-training.
 - Pre-training **is** next-token prediction. Post-training (instruction tuning, RLHF, etc.) comes after and refines behavior.
 
+## Steps for Post-training
+
+Post-training starts from the base model (pre-training only) and usually goes like this.
+
+1. **Instruction tuning (supervised fine-tuning).** Train on a user message plus one good assistant reply, including tool-call examples. This is what makes it act as an assistant.
+2. **Preference tuning.**
+   - Train a reward model on human comparisons of two replies.
+   - Run reinforcement learning: the assistant writes, the reward model scores, and the algorithm nudges the assistant toward higher scores. Stop on a step budget or when held-out reward or win rate flattens.
+3. **Optional extras.** Safety and more tool use are extra post-training passes, not part of pre-training.
+
+After that, weights are frozen and inference is just using them.
+
 ## Steps for Inference
 
 1. **Tokenize** — Split the prompt into tokens and map each to a vocabulary ID.
