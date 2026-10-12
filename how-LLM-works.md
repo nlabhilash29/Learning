@@ -71,3 +71,63 @@ After that, weights are frozen and inference is just using them.
 
 - Only the **last** position is scored for the next token (1×768 → V logits), not every word in the sequence against the full vocab for this step.
 - Softmax is not a step *after* “getting probabilities”; it is how logits become probabilities.
+
+## Different Flavors of Reinforcement Learning
+
+Two independent choices make four combinations:
+
+- **Reward source** — a **reward model** (trained on human rankings; for fuzzy quality like helpfulness and style) or a **checker** (answer matches, tests pass; for checkable math/code).
+- **RL algorithm** — **PPO** (one answer per prompt; a **critic / value model** is the baseline) or **GRPO** (a group of 8–16 answers per prompt; the **group average** is the baseline, no critic).
+- **GRPO vs PPO** — GRPO is cheaper and simpler: no second model-sized critic to train and hold in memory, but it must generate 8–16 answers per prompt. PPO costs a critic but needs one answer per prompt and can credit individual steps. GRPO is now the usual pick for reasoning models scored by a checker.
+
+### 1. Reward model with PPO (classic RLHF)
+
+```mermaid
+flowchart LR
+  P[Prompt] --> M[Assistant model]
+  M --> A[One answer]
+  A --> R[Reward model<br/>trained on human rankings]
+  A --> C[Critic / value model<br/>estimates expected score]
+  R --> ADV[Advantage = reward minus<br/>critic estimate]
+  C --> ADV
+  ADV --> U[PPO update, clipped]
+  U --> M
+```
+
+### 2. Reward model with GRPO
+
+```mermaid
+flowchart LR
+  P[Prompt] --> M[Assistant model]
+  M --> G[Group of 8-16 answers]
+  G --> R[Reward model<br/>scores each answer]
+  R --> AVG[Compare each to<br/>group average<br/>no critic]
+  AVG --> U[GRPO update: push above-average up,<br/>below-average down]
+  U --> M
+```
+
+### 3. Checker with PPO (RLVR, e.g. Tülu 3)
+
+```mermaid
+flowchart LR
+  P[Math / code prompt] --> M[Assistant model]
+  M --> A[One answer]
+  A --> V[Checker: answer matches?<br/>tests pass?<br/>no reward model]
+  A --> C[Critic / value model<br/>estimates expected score]
+  V --> ADV[Advantage = checker score minus<br/>critic estimate]
+  C --> ADV
+  ADV --> U[PPO update, clipped]
+  U --> M
+```
+
+### 4. Checker with GRPO (RLVR, e.g. DeepSeek-R1)
+
+```mermaid
+flowchart LR
+  P[Math / code prompt] --> M[Assistant model]
+  M --> G[Group of 8-16 answers]
+  G --> V[Checker scores each<br/>right = 1, wrong = 0<br/>no reward model]
+  V --> AVG[Compare each to<br/>group average<br/>no critic]
+  AVG --> U[GRPO update: push correct up,<br/>wrong down]
+  U --> M
+```
