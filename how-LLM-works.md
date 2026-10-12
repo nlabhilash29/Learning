@@ -35,9 +35,9 @@ Self-supervised: labels come from the text itself (the actual next token). Weigh
 
 Post-training starts from the base model (pre-training only).
 
-1. **Instruction tuning (supervised fine-tuning). For thinking and non-thinking models.** Train on a user message plus one good reply, including tool-call examples.
-2. **Preference tuning (RLHF). For thinking and non-thinking models.** For answers you cannot automatically check: people rank two replies, a reward model learns that ranking, and reinforcement learning nudges the assistant toward higher scores. This step stays shorter because the model can game the reward. Non-thinking models often stop here.
-3. **Reinforcement learning on checkable answers. For thinking models.** Generate many attempts, keep the ones that match a correct answer (math, code), and train on those. This produces longer step-by-step reasoning. Skip it for non-thinking models.
+1. **Supervised fine-tuning (SFT). For thinking and non-thinking models.** Train on a user message plus one good reply, including tool-call examples.
+2. **RLHF (preference tuning). For thinking and non-thinking models.** For answers you cannot automatically check (fuzzy quality like helpfulness, style, tone): people rank two replies, a reward model learns that ranking, and reinforcement learning (PPO or GRPO) nudges the assistant toward higher scores. This step stays shorter because the model can game the reward.
+3. **RLVR (reinforcement learning with verifiable rewards). For thinking and non-thinking models.** For checkable answers (math, code tests): a checker scores each attempt right or wrong, and reinforcement learning (PPO or GRPO) pushes up the correct ones. Thinking models get long, heavy RLVR, which produces longer step-by-step reasoning that also carries over to fuzzy tasks; non-thinking models get only light RLVR to sharpen accuracy without long thinking.
 4. **Optional extras.** Safety and more tool use are extra post-training passes, not part of pre-training.
 
 After that, weights are frozen and inference is just using them.
