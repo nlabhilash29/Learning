@@ -74,11 +74,15 @@ After that, weights are frozen and inference is just using them.
 
 ## Different Flavors of Reinforcement Learning
 
-Two independent choices make four combinations:
+There are two key factors here:
 
-- **Reward source** — a **reward model** (trained on human rankings; for fuzzy quality like helpfulness and style) or a **checker** (answer matches, tests pass; for checkable math/code).
-- **RL algorithm** — **PPO** (one answer per prompt; a **critic / value model** is the baseline) or **GRPO** (a group of 8–16 answers per prompt; the **group average** is the baseline, no critic).
-- **GRPO vs PPO** — GRPO is cheaper and simpler: no second model-sized critic to train and hold in memory, but it must generate 8–16 answers per prompt. PPO costs a critic but needs one answer per prompt and can credit individual steps. GRPO is now the usual pick for reasoning models scored by a checker.
+1. **Reward source**
+   - **Types of reward source:** a reward model (trained on human rankings, or an LLM judge) or a checker (the answer matches, or the tests pass).
+   - **When to use which:** use a reward model for fuzzy responses like helpfulness, style or jokes (RLHF), and a checker for verifiable ones like math or code tests (RLVR).
+
+2. **Reinforcement learning algorithm**
+   - **Types of RL algorithm:** PPO (one answer per prompt, with a critic model as the baseline) or GRPO (a group of 8 to 16 answers, with the group average as the baseline and no critic).
+   - **When to use which:** use PPO when you can afford the critic and want step-level credit, which is the classic RLHF choice. Use GRPO when you want a cheaper, simpler setup, especially with checker scores; it's the usual choice for reasoning models.
 
 ### 1. Reward model with PPO (classic RLHF)
 
